@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import {
   Modal,
   Box,
@@ -26,41 +26,43 @@ const style = {
   p: 3,
 };
 
+type PostType = {
+  text: string;
+  imageData: string | null;
+  postTime: string | Date;
+};
 type UploadModalProps = {
   open: boolean;
   handleClose: () => void;
-  post?: string[];
-  setPost?: React.Dispatch<React.SetStateAction<string[]>>;
-  imageData?: string | null;
-  setImageData?: React.Dispatch<React.SetStateAction<string | null>>;
+  setPosts: React.Dispatch<React.SetStateAction<PostType[]>>;
+  currentImage?: string | null;
+  setCurrentImage?: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 export default function ModalPost({
   open,
   handleClose,
-  setPost,
-  imageData,
-  setImageData,
+  setPosts,
+  currentImage,
+  setCurrentImage,
 }: UploadModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState<string>("");
-  const [image, setImage] = useState<string | null>(imageData || null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  // Update local image state when parent passes imageData
-  useEffect(() => {
-    if (imageData) {
-      setImage(imageData);
-    }
-  }, [imageData]);
-
   const handleSubmit = () => {
-    if (setPost && text.trim()) {
-      setPost((prev) => [...prev, text]);
+    if (text.trim()) {
+      setPosts((prev) => [
+        ...prev,
+        {
+          text,
+          imageData: currentImage || null,
+          postTime: new Date(),
+        },
+      ]);
       setText("");
-      setImage(null);
-      setImageData?.(null);
+      setCurrentImage?.(null);
       handleClose();
     }
   };
@@ -71,8 +73,7 @@ export default function ModalPost({
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
-        setImage(result);
-        setImageData?.(result);
+        setCurrentImage?.(result);
       };
       reader.readAsDataURL(file);
     }
@@ -123,10 +124,10 @@ export default function ModalPost({
           }}
         />
 
-        {image && (
+        {currentImage && (
           <Box mt={2}>
             <img
-              src={image}
+              src={currentImage}
               alt="Preview"
               style={{ maxWidth: "100%", borderRadius: 8 }}
             />

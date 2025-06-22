@@ -18,6 +18,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
 import InsertEmoticonIcon from "@mui/icons-material/InsertEmoticon";
@@ -32,7 +33,7 @@ type CardPostProps = {
   item?: string;
   userName?: string;
   userAvatar?: string;
-  postTime?: string;
+  postTime?: string | Date;
   onRemove?: () => void;
   loading?: boolean;
   imageData?: string | null;
@@ -50,16 +51,17 @@ function CardPost({
   item,
   userName = "Rusty Mendoza",
   userAvatar = "https://i.pravatar.cc/150?img=3",
-  postTime = "Just now",
+  postTime = new Date(),
   onRemove,
   loading = false,
-  imageData, // ✅ Accept the new prop
+  imageData,
 }: CardPostProps) {
   const [expanded, setExpanded] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentInput, setCommentInput] = useState("");
   const [comments, setComments] = useState<Comment[]>([]);
-  const [postLikes, setPostLikes] = useState(0);
+  const [likeCounts, setlikeCounts] = useState(0);
+  const [liked, setLiked] = useState(false); // ← Added
 
   const maxLength = 50;
   const shouldTruncate = item && item.length > maxLength;
@@ -82,17 +84,28 @@ function CardPost({
       setCommentInput("");
     }
   };
-
   const handlePostLike = () => {
-    setPostLikes((prev) => prev + 1);
+    if (liked) {
+      setLiked(false);
+      setlikeCounts((prev) => prev - 1);
+    } else {
+      setLiked(true);
+      setlikeCounts((prev) => prev + 1);
+    }
   };
-
   const handleCommentLike = (index: number) => {
     setComments((prev) =>
       prev.map((c, i) =>
         i === index ? { ...c, likes: (c.likes || 0) + 1 } : c
       )
     );
+  };
+
+  const getFormattedPostTime = () => {
+    const time = dayjs(postTime);
+    const now = dayjs();
+    const seconds = now.diff(time, "second");
+    return seconds < 10 ? "Just now" : time.fromNow();
   };
 
   return (
@@ -124,16 +137,13 @@ function CardPost({
                 {userName}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {postTime}
+                {getFormattedPostTime()}
               </Typography>
             </>
           )}
         </Box>
         {!loading && (
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            {/* <Typography variant="caption" sx={{ mr: 1 }}>
-              {comments.length} comment{comments.length !== 1 && "s"}
-            </Typography> */}
             <IconButton aria-label="more options" sx={{ color: "grey.600" }}>
               <MoreHorizIcon fontSize="small" />
             </IconButton>
@@ -147,24 +157,6 @@ function CardPost({
           </Box>
         )}
       </Box>
-
-      {/* Media */}
-      {loading ? (
-        <Skeleton
-          variant="rectangular"
-          height={200}
-          sx={{ mt: 1, mx: 2, borderRadius: 1 }}
-        />
-      ) : (
-        imageData && (
-          <CardMedia
-            component="img"
-            image={imageData}
-            alt="Uploaded Post"
-            sx={{ mt: 1, maxHeight: 400, objectFit: "cover" }}
-          />
-        )
-      )}
 
       {/* Content */}
       <CardContent>
@@ -226,14 +218,29 @@ function CardPost({
         )}
       </CardContent>
 
+      {/* Media */}
+      {loading ? (
+        <Skeleton
+          variant="rectangular"
+          height={200}
+          sx={{ mx: 2, borderRadius: 1 }}
+        />
+      ) : imageData ? (
+        <CardMedia
+          component="img"
+          image={imageData}
+          alt="Uploaded Post"
+          sx={{ maxHeight: 400, objectFit: "cover" }}
+        />
+      ) : null}
+
       {/* Like & Comment Counts */}
       {!loading && (
         <>
           <Box sx={{ px: 2, pt: 1, pb: 0.5 }}>
             <Typography variant="caption" color="text.secondary">
-              {postLikes} like{postLikes !== 1 && "s"} • {comments.length}{" "}
-              comment
-              {comments.length !== 1 && "s"}
+              {likeCounts} like{likeCounts !== 1 && "s"} • {comments.length}{" "}
+              comment{comments.length !== 1 && "s"}
             </Typography>
           </Box>
 
@@ -249,7 +256,11 @@ function CardPost({
             }}
           >
             <IconButton aria-label="like" onClick={handlePostLike}>
-              <FavoriteBorderIcon />
+              {liked ? (
+                <FavoriteIcon sx={{ color: "red" }} />
+              ) : (
+                <FavoriteBorderIcon />
+              )}
             </IconButton>
             <IconButton
               aria-label="comment"

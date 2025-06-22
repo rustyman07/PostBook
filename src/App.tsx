@@ -6,20 +6,23 @@ import ModalPost from "./components/ModalPost";
 import CardPost from "./components/CardPost";
 import { Container, Typography } from "@mui/material";
 
+// Define Post type
+type PostType = {
+  text: string;
+  imageData: string | null;
+  postTime: string | Date;
+};
+
 function App() {
   const [open, setOpen] = useState<boolean>(false);
-  const [post, setPost] = useState<string[]>([]);
+  const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // States for Createpost & ModalPost
-
-  const [feelingOpen, setFeelingOpen] = useState(false); // for future use
-  const [imageData, setImageData] = useState<string | null>(null);
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
     setOpen(false);
-    setImageData(null); // Clear imageData on close
+    setCurrentImage(null);
   };
 
   useEffect(() => {
@@ -33,19 +36,15 @@ function App() {
     <>
       <Navbar />
 
-      <Createpost
-        setOpen={setOpen}
-        setFeelingOpen={setFeelingOpen}
-        setImageData={setImageData}
-      />
+      <Createpost setOpen={setOpen} setCurrentImage={setCurrentImage} />
 
       <ModalPost
         open={open}
         handleClose={handleClose}
-        post={post}
-        setPost={setPost}
-        imageData={imageData}
-        setImageData={setImageData}
+        posts={posts}
+        setPosts={setPosts}
+        currentImage={currentImage}
+        setCurrentImage={setCurrentImage}
       />
 
       <Container
@@ -70,10 +69,17 @@ function App() {
             <CardPost key="skeleton-2" loading />
             <CardPost key="skeleton-3" loading />
           </>
-        ) : post.length > 0 ? (
-          post.map((item, index) => (
-            <CardPost key={index} item={item} imageData={imageData} />
-          ))
+        ) : posts.length > 0 ? (
+          posts
+            .map((post, index) => (
+              <CardPost
+                key={index}
+                item={post.text}
+                imageData={post.imageData}
+                postTime={post.postTime}
+              />
+            ))
+            .reverse()
         ) : (
           <Typography variant="body1" color="textSecondary">
             No posts available. Create your first post!

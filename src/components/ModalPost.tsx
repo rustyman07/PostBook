@@ -37,6 +37,7 @@ type UploadModalProps = {
   setPosts: React.Dispatch<React.SetStateAction<PostType[]>>;
   currentImage?: string | null;
   setCurrentImage?: React.Dispatch<React.SetStateAction<string | null>>;
+  posts?: PostType[];
 };
 
 export default function ModalPost({
